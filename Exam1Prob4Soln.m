@@ -127,7 +127,7 @@ om=wnsvec(1);
 mu=0.2;
 ru=0.25;
 
-for ii=1:8,
+for ii=1:4,
     a=qdot(ii);
     b=Adecoupled(ii,ii);
     G=mu*ru*om^2*gamma(ii);
