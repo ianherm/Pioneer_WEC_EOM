@@ -6,12 +6,13 @@ str = '1-pitch resonator, set-up';
 fprintf('%s\n', strrep(pad([' ' str ' '], 80, 'both', '-'), str, ['<strong>' str '</strong>']));
 
 %  Define Variables
-Js = 22.45; % kg m^2, swing moment of inertia
-Ks = 517; % Nm/rad, swing restoring stiffness
-Cs = 1.65; % Nm*s/rad, swing friction
-J1 = 4.19; % kg m^2, flywheel moment of inertia
-K1 = 40.75; % Nm/rad, magnetic spring stiffness
-C1 = 0.85; %Nm*s/rad, Effective system damping (friction)
+% DOF 1 = swing, DOF 2 = flywheel (relative to swing)
+J1 = 22.45; % kg m^2, swing moment of inertia
+K1 = 517; % Nm/rad, swing restoring stiffness
+C1 = 1.65; % Nm*s/rad, swing friction
+J2 = 4.19; % kg m^2, flywheel moment of inertia
+K2 = 40.75; % Nm/rad, magnetic spring stiffness
+C2 = 0.85; %Nm*s/rad, Effective system damping (friction)
 Na = 3/1 ; % Gearbox transmission ratio between flywheel & generator shaft
 Nb = 28/40; % Belt drive transmission ratio between magnetic spring and flywheel
 
@@ -25,14 +26,14 @@ Cpto = Na^2 * Cgen;
 
 
 % Define inertia, damping, stiffness, force matrices 
-J=[Js+J1, J1;
-    J1, J1];
+J=[J1+J2, J2;
+    J2, J2];
 
-C=[Cs, 0;
-    0, C1+Cpto];
+C=[C1, 0;
+    0, C2+Cpto];
 
-K=[Ks, 0;
-    0, K1*Nb^2];
+K=[K1, 0;
+    0, K2*Nb^2];
 
 F = [texc_amp; 0];         % unit direction: excitation on the swing DOF only
 
@@ -187,10 +188,10 @@ end
 
 % Convert modal coordinates back to physical states
 zss=revecssortnorm*qss;
-    % zss(1,:) = theta_s
-    % zss(2,:) = theta_rel
-    % zss(3,:) = theta_s'
-    % zss(4,:) = theta_rel'
+    % zss(1,:) = theta_1   (swing)
+    % zss(2,:) = theta_2   (flywheel, relative to swing)
+    % zss(3,:) = theta_1'
+    % zss(4,:) = theta_2'
 
 %% Plot Modal response at single specified frequency w
 
@@ -246,20 +247,20 @@ f_hz = linspace(0.1,1,4000) ; % Exc frequency range hz, based on lee et. al 2024
 w_rads = f_hz * 2 * pi ; % Angular exc frequency range, ms 
 X = zeros(2, numel(w_rads));
 
-% EOM: J*theta'' + C*theta'+K*theta = F*sim(w,t), theta=(theta_s,theta_rel)
+% EOM: J*theta'' + C*theta'+K*theta = F*sin(w,t), theta=(theta_1,theta_2)
 for k = 1:numel(w_rads)
-    X(:,k) = (K - w_rads(k)^2*J + 1j*w_rads(k)*C) \ F;   % [theta_s; theta_rel] amplitudes
+    X(:,k) = (K - w_rads(k)^2*J + 1j*w_rads(k)*C) \ F;   % [theta_1; theta_2] amplitudes
 end
 
-amp_s   = rad2deg(abs(X(1,:)));    % swing amplitude, deg
-amp_rel = rad2deg(abs(X(2,:)));    % flywheel relative amplitude, deg
-ph_s   = rad2deg(angle(X(1,:)));    % swing phase 
-ph_rel = rad2deg(angle(X(2,:)));    % flywheel-relative phase 
+amp_1 = rad2deg(abs(X(1,:)));    % swing amplitude, deg
+amp_2 = rad2deg(abs(X(2,:)));    % flywheel relative amplitude, deg
+ph_1  = rad2deg(angle(X(1,:)));  % swing phase 
+ph_2  = rad2deg(angle(X(2,:)));  % flywheel-relative phase 
 
 figure(5)
 
 subplot(2,1,1)
-plot(f_hz, amp_s, f_hz, amp_rel, 'LineWidth', 2)
+plot(f_hz, amp_1, f_hz, amp_2, 'LineWidth', 2)
 xlim([f_hz(1) f_hz(end)])
 grid on
 ylabel('Amplitude (deg)')
@@ -267,10 +268,9 @@ legend('swing','flywheel rel.')
 title('Frequency response')
 
 subplot(2,1,2)
-plot(f_hz, ph_s, f_hz, ph_rel, 'LineWidth', 2)
+plot(f_hz, ph_1, f_hz, ph_2, 'LineWidth', 2)
 xlim([f_hz(1) f_hz(end)])
 grid on
 xlabel('Frequency (Hz)')
 ylabel('Phase (deg)')
 legend('swing','flywheel rel.')
-
