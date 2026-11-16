@@ -1,0 +1,74 @@
+Pioneer WEC Swing-Set EOM (1 resonator)
+
+In[568]:= ClearAll["Global'*"]
+DEFINE KINETIC AND POTENTIAL ENERGY EXPRESSIONS
+In[569]:= Tenergy=1/2*J2*(D[\[Theta]2[t],t])^2 + 1/2*J1*(D[\[Theta]1[t],t])^2  
+Venergy=1/2*K2*Nb^2* (\[Theta]2[t]-\[Theta]1[t])^2 +1/2*K1*\[Theta]1[t]^2 
+(*Rayleigh = 1/2*B1*((D[\[Theta]1[t],t])-(D[\[Theta]s[t],t]))^2 + 1/2*BS*(D[\[Theta]s[t],t])^2+1/2*Bpto*((D[\[Theta]1[t],t])-(D[\[Theta]s[t],t]))^2 (*w/ B pto*)*)
+Rayleigh = 1/2*C2*((D[\[Theta]2[t],t])-(D[\[Theta]1[t],t]))^2 + 1/2*C1*(D[\[Theta]1[t],t])^2 (*w/out B pto*)
+\[Delta]W=\[Tau]exc[t]*\[Delta]\[Theta]1[t]+\[Tau]2[t]*(\[Delta]\[Theta]2[t]-\[Delta]\[Theta]1[t])* Na
+Out[569]= 1/2 J1 (\[Theta]1^\[Prime])[t]^2+1/2 J2 (\[Theta]2^\[Prime])[t]^2
+Out[570]= 1/2 K1 \[Theta]1[t]^2+1/2 K2 Nb^2 (-\[Theta]1[t]+\[Theta]2[t])^2
+Out[571]= 1/2 C1 (\[Theta]1^\[Prime])[t]^2+1/2 C2 (-(\[Theta]1^\[Prime])[t]+(\[Theta]2^\[Prime])[t])^2
+Out[572]= Na (-\[Delta]\[Theta]1[t]+\[Delta]\[Theta]2[t]) \[Tau]2[t]+\[Delta]\[Theta]1[t] \[Tau]exc[t]
+DEFINE LAGRANGIAN
+In[573]:= Lag=Tenergy-Venergy
+R = Rayleigh
+Out[573]= -(1/2) K1 \[Theta]1[t]^2-1/2 K2 Nb^2 (-\[Theta]1[t]+\[Theta]2[t])^2+1/2 J1 (\[Theta]1^\[Prime])[t]^2+1/2 J2 (\[Theta]2^\[Prime])[t]^2
+Out[574]= 1/2 C1 (\[Theta]1^\[Prime])[t]^2+1/2 C2 (-(\[Theta]1^\[Prime])[t]+(\[Theta]2^\[Prime])[t])^2
+FIND FIRST EQUATION OF MOTION
+In[575]:= (*Let q1=Subscript[\[Theta], 1]*)
+dLd\[Theta]1=D[Lag,\[Theta]1[t]];
+dLd\[Theta]1dot=D[Lag,(\[Theta]1^\[Prime])[t]];
+dRd\[Theta]1dot = D[R,(\[Theta]1^\[Prime])[t]];
+Q\[Theta]1=Coefficient[\[Delta]W,\[Delta]\[Theta]1[t]];
+equation1=Simplify[D[dLd\[Theta]1dot,t]-dLd\[Theta]1+dRd\[Theta]1dot - Q\[Theta]1]
+Out[579]= (K1+K2 Nb^2) \[Theta]1[t]-K2 Nb^2 \[Theta]2[t]+Na \[Tau]2[t]-\[Tau]exc[t]+C1 (\[Theta]1^\[Prime])[t]+C2 (\[Theta]1^\[Prime])[t]-C2 (\[Theta]2^\[Prime])[t]+J1 (\[Theta]1^\[Prime]\[Prime])[t]
+FIND SECOND EQUATION OF MOTION
+In[580]:= (*Let q2=Subscript[\[Theta], 2]*)
+dLd\[Theta]2=D[Lag,\[Theta]2[t]];
+dLd\[Theta]2dot=D[Lag,(\[Theta]2^\[Prime])[t]];
+dRd\[Theta]2dot = D[R,(\[Theta]2^\[Prime])[t]];
+Q\[Theta]2=Coefficient[\[Delta]W,\[Delta]\[Theta]2[t]];
+equation2=Simplify[D[dLd\[Theta]2dot,t]-dLd\[Theta]2+dRd\[Theta]2dot - Q\[Theta]2]
+Out[584]= K2 Nb^2 (-\[Theta]1[t]+\[Theta]2[t])-Na \[Tau]2[t]+C2 (-(\[Theta]1^\[Prime])[t]+(\[Theta]2^\[Prime])[t])+J2 (\[Theta]2^\[Prime]\[Prime])[t]
+SIMPLIFY
+In[585]:= vars={\[Tau]exc[t],\[Tau]2[t],C1,K1,C2,K2};
+
+rhs1=Collect[Expand[J1 \[Theta]2''[t]-equation1],vars,Factor];
+rhs2=Collect[Expand[J2 \[Theta]2''[t]-equation2],vars,Factor];
+
+eq1Final=J1 \[Theta]1''[t]==rhs1
+eq2Final=J2 \[Theta]2''[t]==rhs2
+Out[588]= J1 (\[Theta]1^\[Prime]\[Prime])[t]==-K1 \[Theta]1[t]-K2 Nb^2 (\[Theta]1[t]-\[Theta]2[t])-Na \[Tau]2[t]+\[Tau]exc[t]-C1 (\[Theta]1^\[Prime])[t]+C2 (-(\[Theta]1^\[Prime])[t]+(\[Theta]2^\[Prime])[t])-J1 ((\[Theta]1^\[Prime]\[Prime])[t]-(\[Theta]2^\[Prime]\[Prime])[t])
+Out[589]= J2 (\[Theta]2^\[Prime]\[Prime])[t]==K2 Nb^2 (\[Theta]1[t]-\[Theta]2[t])+Na \[Tau]2[t]+C2 ((\[Theta]1^\[Prime])[t]-(\[Theta]2^\[Prime])[t])
+In[590]:= (*1. \[Theta]2->\[Theta]1+\[Theta]rel, \[Theta]2-\[Theta]1->\[Theta]rel*)
+relRules={\[Theta]2''[t]->\[Theta]1''[t]+\[Theta]rel''[t],
+\[Theta]2'[t]->\[Theta]1'[t]+\[Theta]rel'[t],
+\[Theta]2[t]->\[Theta]1[t]+\[Theta]rel[t]};
+
+(*2. Get the true RHS:handles either a residual expression or an Equal*)
+getRHS[lhsInertia_,eq_]:=If[Head[eq]===Equal,Last[eq],lhsInertia-eq];
+
+(*3. Keep \[Tau]exc,\[Tau]1 on the right;everything else moves left with the inertia term*)
+splitEq[lhsInertia_,eq_]:=Module[{rhs,tauPart,rest},rhs=Expand[getRHS[lhsInertia,eq]/. relRules];
+tauPart=Coefficient[rhs,\[Tau]exc[t]] \[Tau]exc[t]+Coefficient[rhs,\[Tau]2[t]] \[Tau]2[t];
+rest=Expand[rhs-tauPart];
+rest=Collect[rest,{\[Theta]rel[t],Derivative[1][\[Theta]rel][t],\[Theta]1[t],Derivative[1][\[Theta]1][t]},Factor];
+Collect[Expand[lhsInertia-rest],{\[Theta]rel[t],Derivative[1][\[Theta]rel][t],\[Theta]1[t],Derivative[1][\[Theta]1][t]},Factor]==tauPart];
+
+eq1Final=splitEq[J1 Derivative[2][\[Theta]1][t],equation1]
+eq2Final=splitEq[J2 Derivative[2][\[Theta]2][t],equation2]/. relRules
+Out[593]= K1 \[Theta]1[t]-K2 Nb^2 \[Theta]rel[t]+C1 (\[Theta]1^\[Prime])[t]-C2 (\[Theta]rel^\[Prime])[t]+J1 (\[Theta]1^\[Prime]\[Prime])[t]==-Na \[Tau]2[t]+\[Tau]exc[t]
+Out[594]= K2 Nb^2 \[Theta]rel[t]+C2 (\[Theta]rel^\[Prime])[t]+J2 ((\[Theta]1^\[Prime]\[Prime])[t]+(\[Theta]rel^\[Prime]\[Prime])[t])==Na \[Tau]2[t]
+LAPLACE TRANSFORM
+In[596]:= ics={\[Theta]1[0]->0,\[Theta]rel[0]->0,\[Theta]1'[0]->0,\[Theta]rel'[0]->0};
+
+rules={LaplaceTransform[\[Theta]1[t],t,s]->\[CapitalTheta]1,LaplaceTransform[\[Theta]rel[t],t,s]->\[CapitalTheta]rel,LaplaceTransform[\[Tau]exc[t],t,s]->Texc,LaplaceTransform[\[Tau]2[t],t,s]->T1};
+
+lt=LaplaceTransform[{eq1Final,eq2Final},t,s]/. ics/. rules;
+ltGrouped=Collect[Expand[#[[1]]-#[[2]]],{\[CapitalTheta]1,\[CapitalTheta]rel},Factor]==0&/@lt;
+ltGrouped//TraditionalForm
+
+
+Out[600]//TraditionalForm= {\[CapitalTheta]1 (C1 s+J1 s^2+K1)+\[CapitalTheta]rel (-C2 s-K2 Nb^2)+Na T1-Texc==0,\[CapitalTheta]rel (C2 s+J2 s^2+K2 Nb^2)+\[CapitalTheta]1 J2 s^2-Na T1==0}

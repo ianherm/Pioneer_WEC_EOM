@@ -1,4 +1,4 @@
-clear; close; clc;
+clear; close; clc; close all;
 format loose;
 format short;
 %% 1 Pitch-Resonator on Swing-Set: Define variables, matrices, and input torques
@@ -68,6 +68,7 @@ disp('Non-proportional damping!')
 disp('                           ')
 disp('J matrix check: Ut*J*U = I? Mass-orthonormality')
 disp(round(evec'*J*evec,10))
+
 
 %% Convert to state-space (ss) A (state) and B (input). left/right evec, eval, wn. 
 str = 'State-space x* = Ax + BQ. Left/right evec, eval, wn';
@@ -161,17 +162,20 @@ disp('gamma in qdot=Am*q+gamma*u');
 gamma=levecssortnorm'*Bss
 
 %% Steady-state response to Q(t) = 65*sin(om*t) nt
-
-t = linspace(0,10,1000); % 1000 linearly space points from 0 set to 10 sec
-w = 0.25:0.05:0.45 ; % Excitation frequency range
-
 % Complex: Q0*exp(j*om*t): real part -> cos(om*t) response, imag part -> sin(om*t) response
 % Physical Space: x* = Ass*x + Bss*Q(t), Q(t)=sin(wt), Bss contains 65 amp
 % Modal: 1*qdot - Am*q = gamma*Q(t), qdot = Am*q + gamma*Q(t), gamma = Y'B'
 % steady-state response: qi = A1 sin(wt) + A2 cos(wt)
 % A1 = -lam_i*gamma_i/(lam_i^2+w^2),  A2 = -w*gamma_i/(lam_i^2+w^2)
 
-w1 = 4.9;                              % fixed excitation frequency 
+t = linspace(0,5,1000); % 1000 linearly space points from 0 set to 10 sec
+
+wn_pto_lee24_hz = 0.347 ; % PTO natural freq (from Lee 2024), Hz
+wn_pto_lee24_ms = wn_pto_lee24_hz * 2 * pi  % PTO natural freq (from Lee 2024), m/s
+wn_swing_lee24_hz = 0.77 % Swing natural freq (from Lee 2024), Hz
+
+w1 = wn_pto_lee24_ms ; % fixed w for modal/physical response, m/s
+
 for ii=1:size(Ass,1)
     lam=Adecoupled(ii,ii);              % modal eigenvalue lambda_i
     G=gamma(ii);                        % gamma = Y'*Bss already includes the 65 N*m
@@ -187,24 +191,41 @@ zss=revecssortnorm*qss;
     % zss(3,:) = theta_s'
     % zss(4,:) = theta_rel'
 
-%% Plot
+%% Plot Modal response at single specified frequency w
+
 % Modal coordinates
-figure(11)
-plot(t,real(qss(1:2,:)),t,imag(qss(1:2,:)),'LineWidth',2)
+figure(1)
+plot(t, real(qss(1,:)),  'LineWidth', 2, 'LineStyle', '-')
+hold on
+plot(t, real(qss(2,:)),  'LineWidth', 2, 'LineStyle', '--')
+plot(t, imag(qss(1,:)),  'LineWidth', 2, 'LineStyle', ':')
+plot(t, imag(qss(2,:)),  'LineWidth', 2, 'LineStyle', '-.')
+hold off
 title('Modal Coordinates q1, q2','FontSize',20)
-xlabel('Time (s)','FontSize',20), ylabel('Modal amplitude','FontSize',20)
-legend('q1-real','q2-real','q1-imag','q2-imag'), grid on
+xlabel('Time (s)','FontSize',20)
+ylabel('Modal amplitude','FontSize',20)
+legend('q1-real','q2-real','q1-imag','q2-imag')
+grid on
 set(gca,'FontSize',12,'LineWidth',2)
 
-figure(12)
-plot(t,real(qss(3:4,:)),t,imag(qss(3:4,:)),'LineWidth',2)
+figure(2)
+plot(t, real(qss(3,:)),  'LineWidth', 2, 'LineStyle', '-')
+hold on
+plot(t, real(qss(4,:)),  'LineWidth', 2, 'LineStyle', '--')
+plot(t, imag(qss(3,:)),  'LineWidth', 2, 'LineStyle', ':')
+plot(t, imag(qss(4,:)),  'LineWidth', 2, 'LineStyle', '-.')
+hold off
 title('Modal Coordinates q3, q4','FontSize',20)
-xlabel('Time (s)','FontSize',20), ylabel('Modal amplitude','FontSize',20)
-legend('q3-real','q4-real','q3-imag','q4-imag'), grid on
+xlabel('Time (s)','FontSize',20)
+ylabel('Modal amplitude','FontSize',20)
+legend('q3-real','q4-real','q3-imag','q4-imag')
+grid on
 set(gca,'FontSize',12,'LineWidth',2)
 
+
+%% Plot physical response at single specified frequency w
 % Physical angles (deg)
-figure(13)
+figure(3)
 plot(t,rad2deg(real(zss(1:2,:))),'LineWidth',2)
 title(sprintf('Angles at w = %.3f rad/s',w1),'FontSize',20)
 xlabel('Time (s)','FontSize',20), ylabel('Angle (deg)','FontSize',20)
@@ -212,20 +233,21 @@ legend('swing \theta_1','flywheel rel. \theta_2'), grid on
 set(gca,'FontSize',12,'LineWidth',2)
 
 % Physical angular velocities (rad/s)
-figure(14)
+figure(4)
 plot(t,real(zss(3:4,:)),'LineWidth',2)
 title('Angular Velocities','FontSize',20)
 xlabel('Time (s)','FontSize',20), ylabel('Velocity (rad/s)','FontSize',20)
 legend('swing \omega_1','flywheel rel. \omega_2'), grid on
 set(gca,'FontSize',12,'LineWidth',2)
 
-%% Frequency response
-w = linspace(0.1, 8, 4000);        % rad/s, dense: peaks are narrow
-X = zeros(2, numel(w));
+%% Plot frequency amplitude/phase response
+f_hz = linspace(0.1,1,4000) ; % Exc frequency range hz, based on lee et. al 2024 fig 8
+w_rads = f_hz * 2 * pi ; % Angular exc frequency range, ms 
+X = zeros(2, numel(w_rads));
 
 % EOM: J*theta'' + C*theta'+K*theta = F*sim(w,t), theta=(theta_s,theta_rel)
-for k = 1:numel(w)
-    X(:,k) = (K - w(k)^2*J + 1j*w(k)*C) \ F;   % [theta_s; theta_rel] amplitudes
+for k = 1:numel(w_rads)
+    X(:,k) = (K - w_rads(k)^2*J + 1j*w_rads(k)*C) \ F;   % [theta_s; theta_rel] amplitudes
 end
 
 amp_s   = rad2deg(abs(X(1,:)));    % swing amplitude, deg
@@ -233,17 +255,21 @@ amp_rel = rad2deg(abs(X(2,:)));    % flywheel relative amplitude, deg
 ph_s   = rad2deg(angle(X(1,:)));    % swing phase 
 ph_rel = rad2deg(angle(X(2,:)));    % flywheel-relative phase 
 
-figure
+figure(5)
+
 subplot(2,1,1)
-plot(w, amp_s, w, amp_rel, 'LineWidth', 2), hold on
-yline(10, '--k', '10° limit')
-xline(wns, ':', 'Color', [.4 .4 .4])           % undamped natural frequencies
-set(gca,'YScale','log'), grid on
-ylabel('Amplitude (deg)'), legend('swing','flywheel rel.')
+plot(f_hz, amp_s, f_hz, amp_rel, 'LineWidth', 2)
+xlim([f_hz(1) f_hz(end)])
+grid on
+ylabel('Amplitude (deg)')
+legend('swing','flywheel rel.')
 title('Frequency response')
 
 subplot(2,1,2)
-plot(w, ph_s, w, ph_rel, 'LineWidth', 2), grid on
-xlabel('\omega (rad/s)'), ylabel('Phase (deg)')
+plot(f_hz, ph_s, f_hz, ph_rel, 'LineWidth', 2)
+xlim([f_hz(1) f_hz(end)])
+grid on
+xlabel('Frequency (Hz)')
+ylabel('Phase (deg)')
 legend('swing','flywheel rel.')
 
