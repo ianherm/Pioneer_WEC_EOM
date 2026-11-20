@@ -194,16 +194,21 @@ zss=revecssortnorm*qss;
     % zss(4,:) = theta_2'
 
 %% Plot Modal response at single specified frequency w
+% Color definitions
+q1_real = [0.153 0.702 0.145];   % green
+q1_imag = [0.302 0.471   1  ];      % blue
+q2_real = [0.922 0.851 0.00];   % gold
+q2_imag = [0.902 0 0];   % red
 
 % Modal coordinates
 figure(1)
-plot(t, real(qss(1,:)),  'LineWidth', 2, 'LineStyle', '-')
+plot(t, real(qss(1,:)),'Color', q1_real, 'LineWidth', 2, 'LineStyle', '-')
 hold on
-plot(t, real(qss(2,:)),  'LineWidth', 2, 'LineStyle', '--')
-plot(t, imag(qss(1,:)),  'LineWidth', 2, 'LineStyle', ':')
-plot(t, imag(qss(2,:)),  'LineWidth', 2, 'LineStyle', '-.')
+plot(t, real(qss(2,:)),'Color', q2_real, 'LineWidth', 2, 'LineStyle', '--')
+plot(t, imag(qss(1,:)),'Color', q1_imag, 'LineWidth', 2, 'LineStyle', ':')
+plot(t, imag(qss(2,:)),'Color', q2_imag, 'LineWidth', 2, 'LineStyle', '-.')
 hold off
-title('Modal Coordinates q1, q2','FontSize',20)
+title(sprintf('Modal Coordinates q1, q2 at w = %.3f rad/s',w1),'FontSize',20)
 xlabel('Time (s)','FontSize',20)
 ylabel('Modal amplitude','FontSize',20)
 legend('q1-real','q2-real','q1-imag','q2-imag')
@@ -211,13 +216,13 @@ grid on
 set(gca,'FontSize',12,'LineWidth',2)
 
 figure(2)
-plot(t, real(qss(3,:)),  'LineWidth', 2, 'LineStyle', '-')
+plot(t, real(qss(3,:)),'Color', q1_real,'LineWidth', 2, 'LineStyle', '-')
 hold on
-plot(t, real(qss(4,:)),  'LineWidth', 2, 'LineStyle', '--')
-plot(t, imag(qss(3,:)),  'LineWidth', 2, 'LineStyle', ':')
-plot(t, imag(qss(4,:)),  'LineWidth', 2, 'LineStyle', '-.')
+plot(t, real(qss(4,:)),'Color', q2_real, 'LineWidth', 2, 'LineStyle', '--')
+plot(t, imag(qss(3,:)),'Color', q1_imag, 'LineWidth', 2, 'LineStyle', ':')
+plot(t, imag(qss(4,:)),'Color', q2_imag, 'LineWidth', 2, 'LineStyle', '-.')
 hold off
-title('Modal Coordinates q3, q4','FontSize',20)
+title(sprintf('Modal Coordinates q3, q4 at w = %.3f rad/s',w1),'FontSize',20)
 xlabel('Time (s)','FontSize',20)
 ylabel('Modal amplitude','FontSize',20)
 legend('q3-real','q4-real','q3-imag','q4-imag')
@@ -237,7 +242,7 @@ set(gca,'FontSize',12,'LineWidth',2)
 % Physical angular velocities (rad/s)
 figure(4)
 plot(t,real(zss(3:4,:)),'LineWidth',2)
-title('Angular Velocities','FontSize',20)
+title(sprintf('Angular Velocity at w = %.3f rad/s',w1),'FontSize',20)
 xlabel('Time (s)','FontSize',20), ylabel('Velocity (rad/s)','FontSize',20)
 legend('swing \omega_1','flywheel rel. \omega_2'), grid on
 set(gca,'FontSize',12,'LineWidth',2)

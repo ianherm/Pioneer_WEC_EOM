@@ -62,7 +62,6 @@ subplot(2,1,1)
 semilogy(w,amp_1pitch(1,:),'b-','LineWidth',2)
 hold on
 semilogy(w,amp_2pitch(1,:),'r--','LineWidth',2)
-yline(10,'--k','10 deg limit')
 grid on
 ylabel('Swing Angle Amplitude (deg)')
 title('Frequency Response: 1-Pitch vs 2-Pitch')
@@ -73,7 +72,7 @@ subplot(2,1,2)
 semilogy(w,amp_1pitch(2,:),'b-','LineWidth',2)
 hold on
 semilogy(w,amp_2pitch(2,:),'r--','LineWidth',2)
-semilogy(w,amp_2pitch(3,:),'Color',[0.2 0.6 0.2], ...
+semilogy(w,amp_2pitch(3,:),'Color',[1 0.871 0.282], ...
     'LineStyle',':','LineWidth',2)
 grid on
 xlabel('\omega (rad/s)')
@@ -99,7 +98,7 @@ subplot(2,1,2)
 plot(w,ph_1pitch(2,:),'b-','LineWidth',2)
 hold on
 plot(w,ph_2pitch(2,:),'r--','LineWidth',2)
-plot(w,ph_2pitch(3,:),'Color',[0.2 0.6 0.2], ...
+plot(w,ph_2pitch(3,:),'Color',[1 0.871 0.282], ...
     'LineStyle',':','LineWidth',2)
 grid on
 xlabel('\omega (rad/s)')

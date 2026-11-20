@@ -20,7 +20,13 @@ Cgen = 0;    % Generator damping (Nm*s/rad)
 Cpto = Na^2*Cgen;
 texc_amp = 65;  % Excitation torque amplitude (Nm)
 
-%% Single resonator
+% Frequency vector shared by all plots (Hz)
+f = logspace(log10(0.05), log10(20), 3000);
+
+red  = [1 0 0];   
+blue = [0 0 1];   
+
+%% Single resonator (use G for MIMO)
 % G11 = Excitation torque to swing velocity
 % G12 = Gearbox torque to swing velocity
 % G21 = Excitation torque to flywheel velocity
@@ -44,28 +50,26 @@ G22 = (z1 + z2) / (z1*z2 + z1*z3 + z2*z3) ;
 G_mimo = [G11, G12; 
           G21, G22];
 
-% Plot the Bode diagram for all input-output pairs
+% Bode diagram (Hz) for all input-output pairs
 figure(1);
-bode(G_mimo);
-grid on;
+plotBodeGrid(G_mimo, 'G', f, blue);
 
-%% Double resonator
-% G11 = Excitation torque to swing velocity
-% G12 = Gearbox torque 2 to swing velocity
-% G13 = Gearbox torque 3 to swing velocity
+%% Double resonator (use H for MIMO)
+% H11 = Excitation torque to swing velocity
+% H12 = Gearbox torque 2 to swing velocity
+% H13 = Gearbox torque 3 to swing velocity
 
-% G21 = Excitation torque to flywheel 2 velocity
-% G22 = Gearbox torque 2 to flywheel 2 velocity
-% G23 = Gearbox torque 3 to flywheel 2 velocity
+% H21 = Excitation torque to flywheel 2 velocity
+% H22 = Gearbox torque 2 to flywheel 2 velocity
+% H23 = Gearbox torque 3 to flywheel 2 velocity
 
-% G31 = Excitation torque to flywheel 3 velocity
-% G32 = Gearbox torque 2 to flywheel 3 velocity
-% G33 = Gearbox torque 3 to flywheel 3 velocity
+% H31 = Excitation torque to flywheel 3 velocity
+% H32 = Gearbox torque 2 to flywheel 3 velocity
+% H33 = Gearbox torque 3 to flywheel 3 velocity
 
-% G21 = G12... Excitation torque to flywheel 2 velocity = Gearbox torque 2 to swing velocity
-% G23 = G32... Gearbox torque 3 to flywheel 2 velocity = Gearbox torque 2 to flywheel 3 velocity
-% G13 = G31... Gearbox torque 3 to swing velocity =  Excitation torque to flywheel 3 velocity
-
+% H12 = H21, H31 = H13, identical flywheels -> H12 = H21 = H31 = H13
+% H22 = H33
+% H23 = H32 (unique to double resonator)
 
 % Define laplace variable
 s = tf('s') ; 
@@ -79,24 +83,93 @@ z5 = C3 + ((Nb^2 * K3)/s) ;
 
 % Define inputs
 denom = (z2*z4*z5 + z3*z4*z5 + z1*(z2 + z4)*(z3 + z5) + z2*z3*(z4 + z5)) ;
-G11 = ((z2 + z4)*(z3 + z5)) / denom ;
-G12 = (-z2*(z3+z5)) / denom ;
-G13 = (z3*(z2 + z4)) / denom ;
-G21 = G12 ;
-G22 = (z3*z5 + z1*(z3 + z5) + z2*(z3 + z5)) / denom;
-G23 = (z2*z3) / denom ;
-G31 = G13;
-G32 = G23;
-G33 = (z3*z4 + z1*(z2 + z4) + z2*(z3 + z4)) / denom;
+H11 = ((z2 + z4)*(z3 + z5)) / denom ;
+H12 = (-z2*(z3+z5)) / denom ;
+H13 = (-z3*(z2 + z4)) / denom ;
+H21 = H12 ;
+H22 = (z3*z5 + z1*(z3 + z5) + z2*(z3 + z5)) / denom;
+H23 = (z2*z3) / denom ;
+H31 = H13;
+H32 = H23;
+H33 = (z3*z4 + z1*(z2 + z4) + z2*(z3 + z4)) / denom;
 
-G_mimo = [G11, G12, G13; 
-          G21, G22, G23;
-          G31, G32, G33];
+H_mimo = [H11, H12, H13; 
+          H21, H22, H23;
+          H31, H32, H33];
 
-% Plot the Bode diagram for all input-output pairs
+% Plot Bode
 figure(2);
-bode(G_mimo);
-grid on;
+plotBodeGrid(H_mimo, 'H', f, red);
 
-%% Plot comparison
-%
+%% Plot comparison (H = red, G = blue)
+
+% Figure 3: H11 v G11
+figure(3);
+plotCompare({H11, G11}, {red, blue}, {'H11', 'G11'}, ...
+    'H11 v G11: Excitation Torque to Swing Velocity', f);
+
+% Figure 4: H21/H12/H31/H13 v G12/G21
+% (all identical within each group, so one curve per group is plotted)
+figure(4);
+plotCompare({H12, G12}, {red, blue}, {'H21/H12/H31/H13', 'G12/G21'}, ...
+    ['H21/H12/H31/H13 v G12/G21: Curves represent Excitation Torque to Flywheel(s) Velocity & ' ...
+     'Gear Box(s) Torque to Swing Velocity'], f);
+
+% Figure 5: H23/H32 (single profile)
+figure(5);
+plotCompare({H23}, {red}, {'H23/H32'}, ...
+    'H23/H32: Gearbox Torque 3 to Flywheel Velocity 2, Gearbox Torque 3 to Flywheel Velocity 2', f);
+
+% Figure 6: G22 v H22/H33
+figure(6);
+plotCompare({H22, G22}, {red, blue}, {'H22/H33', 'G22'}, ...
+    'H22/H33 v G22: Gearbox Torque to Flywheel Velocity, Same resonator', f);
+
+%% Local functions 
+function [magdB, phdeg] = bodeHz(sys, f)
+    % Frequency response evaluated at f (Hz)
+    resp  = squeeze(freqresp(sys, 2*pi*f));
+    magdB = 20*log10(abs(resp));
+    phdeg = unwrap(angle(resp)) * 180/pi;
+end
+
+function plotBodeGrid(M, name, f, col)
+    if nargin < 4, col = [0 0.447 0.741]; end   % default MATLAB blue
+    n = size(M,1);  m = size(M,2);
+    tiledlayout(2*n, m, 'TileSpacing', 'compact', 'Padding', 'compact');
+    for i = 1:n
+        for j = 1:m
+            [magdB, phdeg] = bodeHz(M(i,j), f);
+
+            nexttile((2*i-2)*m + j);               % magnitude tile
+            plot(f, magdB, 'Color', col, 'LineWidth', 1.2); grid on;
+            title(sprintf('%s%d%d', name, i, j));
+            ylabel('Magnitude (dB)'); xlim([0.10 1]); ylim([-80 20]);
+
+            nexttile((2*i-1)*m + j);               % phase tile
+            plot(f, phdeg, 'Color', col, 'LineWidth', 1.2); grid on;
+            ylabel('Phase (deg)'); xlabel('Frequency (Hz)');
+            xlim([0.10 1]); ylim([-360 360]); yticks(-360:180:360);
+        end
+    end
+end
+
+function plotCompare(sysList, colors, labels, ttl, f)
+    tl = tiledlayout(2, 1, 'TileSpacing', 'compact', 'Padding', 'compact');
+    title(tl, ttl, 'FontWeight', 'bold');
+    axM = nexttile; hold on; grid on;
+    axP = nexttile; hold on; grid on;
+    for k = 1:numel(sysList)
+        [magdB, phdeg] = bodeHz(sysList{k}, f);
+        plot(axM, f, magdB, 'Color', colors{k}, 'LineWidth', 1.4, ...
+            'DisplayName', labels{k});
+        plot(axP, f, phdeg, 'Color', colors{k}, 'LineWidth', 1.4, ...
+            'DisplayName', labels{k});
+    end
+    set([axM axP], 'XLim', [0.1 1]);
+    set(axM, 'YLim', [-80 20]);
+    set(axP, 'YLim', [-360 360], 'YTick', -360:180:360);
+    ylabel(axM, 'Magnitude (dB)');
+    ylabel(axP, 'Phase (deg)'); xlabel(axP, 'Frequency (Hz)');
+    legend(axM, 'Location', 'best');
+end
